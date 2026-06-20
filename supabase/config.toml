@@ -1,4 +1,4 @@
-project_id = "kotobase"
+project_id = "jmdict-hakase"
 
 # We hand-write the API and this is a Postgres-focused project, so we run only
 # Postgres + Studio and disable the rest. Flip any `enabled` back to true to

@@ -1,5 +1,5 @@
 {
-  "name": "kotobase",
+  "name": "jmdict-hakase",
   "version": "0.1.0",
   "description": "A query-shaped PostgreSQL build of the JMdict Japanese-English dictionary, with CJK full-text and pgvector semantic search and a thin Fastify API.",
   "type": "module",
