@@ -1,0 +1,15 @@
+# pnpm supply-chain hardening (pnpm v10). Verify with `pnpm config list`.
+# v11 renames these — migrate later via: pnpx codemod run pnpm-v10-to-v11
+
+minimumReleaseAge: 10080 # skip versions <7d old (rides out the fresh-malware window); 1440=1d, 20160=14d
+minimumReleaseAgeExclude: [] # 'pkg' / 'pkg@1.2.3' to exempt when you need a hot release
+
+trustPolicy: no-downgrade # fail if a package's trust/provenance level drops vs prior releases
+trustPolicyIgnoreAfter: 43200 # ...unless it was published >30d ago
+trustPolicyExclude: []
+
+onlyBuiltDependencies: # dependency lifecycle scripts are blocked unless listed here
+  - supabase # downloads its CLI binary on install
+
+
+# Relying on pnpm v10 defaults: strictDepBuilds, verifyStoreIntegrity, blockExoticSubdeps (true); dangerouslyAllowAllBuilds (false).

@@ -1,0 +1,158 @@
+lockfileVersion: "9.0"
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+  .:
+    devDependencies:
+      "@types/node":
+        specifier: 25.9.3
+        version: 25.9.3
+      supabase:
+        specifier: 2.106.0
+        version: 2.106.0
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+packages:
+  "@supabase/cli-darwin-arm64@2.106.0":
+    resolution:
+      {
+        integrity: sha512-xi/IAjjbebh6xA9Nkkb7ZwC5ACKJ38OqMoYk1y20ScW5Wt+pxTCcOcaWDWu+2u2Pwc3vTYnXhbknVcQt9UcChQ==,
+      }
+    cpu: [arm64]
+    os: [darwin]
+
+  "@supabase/cli-darwin-x64@2.106.0":
+    resolution:
+      {
+        integrity: sha512-AT2s/8/3Ffb7IkcUXK6sA/iPCzJhh4Fh/XqzAGNGsVd1xCA/ZGniqU8BL03TqPkN1sR0iDaShjMLLIlHEflyPQ==,
+      }
+    cpu: [x64]
+    os: [darwin]
+
+  "@supabase/cli-linux-arm64-musl@2.106.0":
+    resolution:
+      {
+        integrity: sha512-2LExuOHuU6odXorNTvq4M/OvueW+wOs3KDsaCpk+scQMnB6LbmqNidEjXAsKpZu3zyE8MmmtdbJBlRNN/KLdcw==,
+      }
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  "@supabase/cli-linux-arm64@2.106.0":
+    resolution:
+      {
+        integrity: sha512-L/pX7fkV31x7zPrUOcD6KMtZ03j16o41XxgkACFoOAE9lFz8KaJOBSHvn2QLeWEa2kLz7jwpisvpshPSMjuxOw==,
+      }
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  "@supabase/cli-linux-x64-musl@2.106.0":
+    resolution:
+      {
+        integrity: sha512-wz7heB3wwzmRdLRgqngd2VjPPNIdv6/Y8Q0dX/ZvjcL9/Nk8BYSZ7yjypapLpra+swRnbEJ4jAU6eAShiaB1Hg==,
+      }
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  "@supabase/cli-linux-x64@2.106.0":
+    resolution:
+      {
+        integrity: sha512-+ihtqFNURc8ssULgQoHQBR4AtUmxez9dtqjclqOV0y5r65SX7Ginmiby4XDW9LPlqHT+MB7OyD1vk0T6pQUtPA==,
+      }
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  "@supabase/cli-windows-arm64@2.106.0":
+    resolution:
+      {
+        integrity: sha512-QkEfRDiuuQwcfASo2DIJZ59AFV6xpqhPNo4r0kSVt38StYk3iL7ZcSOkZvGQWLlJ8kXKPBWEMhLnfHQF9r+Xfg==,
+      }
+    cpu: [arm64]
+    os: [win32]
+
+  "@supabase/cli-windows-x64@2.106.0":
+    resolution:
+      {
+        integrity: sha512-1tQFbrH1KJhWJqHrY087XPz1WRi20eKG1pebG+6PjSD6XN+j0+x1PTOtBZrylXgY1fOg8BqgU8kl3KX8hI5l9w==,
+      }
+    cpu: [x64]
+    os: [win32]
+
+  "@types/node@25.9.3":
+    resolution:
+      {
+        integrity: sha512-603BddQMv3pUcr4U2dhujk83N2tTDVr/34wII2B6bJy6g+8WD6yUb11jszNs0gdi4PesVWl7ABt8nYMVpnLUcg==,
+      }
+
+  supabase@2.106.0:
+    resolution:
+      {
+        integrity: sha512-jV0PJi5LqXUMZ4kriRLvST3DX1YDhrxOgnFJLOn6oUw3KQEFJPXhA60yLQ9aWG1E1uZCp4vUJwSuSGq3HPfaSQ==,
+      }
+    hasBin: true
+
+  typescript@6.0.3:
+    resolution:
+      {
+        integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==,
+      }
+    engines: { node: ">=14.17" }
+    hasBin: true
+
+  undici-types@7.24.6:
+    resolution:
+      {
+        integrity: sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg==,
+      }
+
+snapshots:
+  "@supabase/cli-darwin-arm64@2.106.0":
+    optional: true
+
+  "@supabase/cli-darwin-x64@2.106.0":
+    optional: true
+
+  "@supabase/cli-linux-arm64-musl@2.106.0":
+    optional: true
+
+  "@supabase/cli-linux-arm64@2.106.0":
+    optional: true
+
+  "@supabase/cli-linux-x64-musl@2.106.0":
+    optional: true
+
+  "@supabase/cli-linux-x64@2.106.0":
+    optional: true
+
+  "@supabase/cli-windows-arm64@2.106.0":
+    optional: true
+
+  "@supabase/cli-windows-x64@2.106.0":
+    optional: true
+
+  "@types/node@25.9.3":
+    dependencies:
+      undici-types: 7.24.6
+
+  supabase@2.106.0:
+    optionalDependencies:
+      "@supabase/cli-darwin-arm64": 2.106.0
+      "@supabase/cli-darwin-x64": 2.106.0
+      "@supabase/cli-linux-arm64": 2.106.0
+      "@supabase/cli-linux-arm64-musl": 2.106.0
+      "@supabase/cli-linux-x64": 2.106.0
+      "@supabase/cli-linux-x64-musl": 2.106.0
+      "@supabase/cli-windows-arm64": 2.106.0
+      "@supabase/cli-windows-x64": 2.106.0
+
+  typescript@6.0.3: {}
+
+  undici-types@7.24.6: {}
