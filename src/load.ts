@@ -204,11 +204,29 @@ async function stage(jsonPath: string, tags: Record<string, string>) {
   };
 }
 
+async function buildIndexes(sql: postgres.TransactionSql): Promise<void> {
+  await sql`CREATE INDEX kanji_entry_id_idx ON kanji (entry_id)`;
+  await sql`CREATE INDEX kana_entry_id_idx ON kana (entry_id)`;
+  await sql`CREATE INDEX sense_entry_id_idx ON sense (entry_id)`;
+  await sql`CREATE INDEX gloss_sense_id_idx ON gloss (sense_id)`;
+  await sql`CREATE INDEX kanji_text_idx ON kanji (text)`;
+  await sql`CREATE INDEX kana_text_idx ON kana (text)`;
+  await sql`CREATE INDEX sense_part_of_speech_idx ON sense USING GIN (part_of_speech)`;
+}
+
 async function load(tags: Record<string, string>): Promise<void> {
   const sql = postgres(DB_URL);
   try {
     await sql.begin(async (sql) => {
       await sql`TRUNCATE entry, kanji, kana, sense, gloss, tag RESTART IDENTITY CASCADE`;
+
+      const stale = await sql`
+        SELECT indexname FROM pg_indexes
+        WHERE schemaname = 'public'
+          AND tablename IN ('entry', 'kanji', 'kana', 'sense', 'gloss')
+          AND indexname !~ '_pkey$'`;
+      for (const { indexname } of stale)
+        await sql`DROP INDEX IF EXISTS ${sql(indexname)}`;
 
       const tagRows = Object.entries(tags).map(([code, description]) => ({
         code,
@@ -226,11 +244,11 @@ async function load(tags: Record<string, string>): Promise<void> {
       ] as const) {
         await pipeline(
           createReadStream(`${STAGE_DIR}${name}.tsv`),
-          await sql
-            .unsafe(`COPY ${name} (${COLUMNS[name].join(", ")}) FROM STDIN`)
-            .writable(),
+          await sql`COPY ${sql(name)} (${sql([...COLUMNS[name]])}) FROM STDIN`.writable(),
         );
       }
+
+      await buildIndexes(sql);
 
       for (const t of ["kanji", "kana", "sense", "gloss"]) {
         await sql`SELECT setval(pg_get_serial_sequence(${t}, 'id'), (SELECT COALESCE(MAX(id), 1) FROM ${sql(t)}))`;
@@ -254,7 +272,7 @@ async function main(): Promise<void> {
     `  entries ${counts.entry} · kanji ${counts.kanji} · kana ${counts.kana} · sense ${counts.sense} · gloss ${counts.gloss}`,
   );
 
-  console.log("COPY into Postgres (one transaction) …");
+  console.log("COPY + index into Postgres (one transaction) …");
   await load(tags);
 
   await rm(STAGE_DIR, { recursive: true, force: true });
