@@ -19,6 +19,8 @@
     "migration:up": "supabase migration up",
     "data:download": "node src/download.ts",
     "data:load": "node src/load.ts",
+    "dev": "node --watch src/server/index.ts",
+    "serve": "node src/server/index.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
@@ -27,6 +29,7 @@
     "typescript": "6.0.3"
   },
   "dependencies": {
+    "fastify": "5.8.5",
     "postgres": "3.4.9",
     "stream-chain": "4.2.5",
     "stream-json": "3.4.0",
