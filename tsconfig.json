@@ -10,6 +10,7 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
     "forceConsistentCasingInFileNames": true,
 
     "resolveJsonModule": true,
