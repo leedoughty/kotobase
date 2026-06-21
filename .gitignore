@@ -150,3 +150,6 @@ jmdict-*.json
 
 # Local working/design doc
 PLAN.md
+
+# Local SQL practice / scratch (the real search queries live in the API)
+queries/
