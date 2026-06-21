@@ -8,7 +8,7 @@
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.18"
   },
   "scripts": {
     "db:start": "supabase start",
@@ -17,11 +17,15 @@
     "db:reset": "supabase db reset",
     "migration:new": "supabase migration new",
     "migration:up": "supabase migration up",
+    "data:download": "node src/download.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "25.9.3",
     "supabase": "2.106.0",
     "typescript": "6.0.3"
+  },
+  "dependencies": {
+    "tar": "7.5.16"
   }
 }

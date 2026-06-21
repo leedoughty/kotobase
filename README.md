@@ -2,6 +2,13 @@
 
 JMdict Japanese–English dictionary in PostgreSQL, with CJK full-text and pgvector semantic search, served over a Fastify API.
 
+## Data source
+
+The dictionary is ingested from [`scriptin/jmdict-simplified`](https://github.com/scriptin/jmdict-simplified),
+a clean JSON conversion of JMdict (with MIT-licensed TypeScript types). A specific
+release is pinned and checksum-verified at download time - see [`src/download.ts`](./src/download.ts).
+The underlying JMdict data originates from the EDRDG (see License below).
+
 ## License
 
 Source code is licensed **MIT** (see [`LICENSE`](./LICENSE)).
