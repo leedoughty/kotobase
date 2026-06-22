@@ -53,3 +53,36 @@ export function searchByHeadword(sql: Db, q: string, limit: number) {
     LIMIT ${limit}
   `;
 }
+
+export function getEntry(sql: Db, id: number) {
+  return sql`
+    SELECT
+      e.id::int AS id,
+      COALESCE((
+        SELECT jsonb_agg(jsonb_build_object(
+          'text', k.text, 'common', k.common, 'tags', k.tags
+        ) ORDER BY k.position)
+        FROM kanji k WHERE k.entry_id = e.id
+      ), '[]'::jsonb) AS kanji,
+      COALESCE((
+        SELECT jsonb_agg(jsonb_build_object(
+          'text', r.text, 'common', r.common, 'tags', r.tags,
+          'appliesToKanji', r.applies_to_kanji
+        ) ORDER BY r.position)
+        FROM kana r WHERE r.entry_id = e.id
+      ), '[]'::jsonb) AS kana,
+      COALESCE((
+        SELECT jsonb_agg(jsonb_build_object(
+          'partOfSpeech', s.part_of_speech, 'field', s.field, 'misc', s.misc,
+          'dialect', s.dialect, 'info', s.info,
+          'glosses', COALESCE((
+            SELECT jsonb_agg(g.text ORDER BY g.position)
+            FROM gloss g WHERE g.sense_id = s.id
+          ), '[]'::jsonb)
+        ) ORDER BY s.position)
+        FROM sense s WHERE s.entry_id = e.id
+      ), '[]'::jsonb) AS senses
+    FROM entry e
+    WHERE e.id = ${id}
+  `;
+}

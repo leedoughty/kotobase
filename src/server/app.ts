@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import { createDb } from "./db.ts";
 import { searchRoutes } from "./routes/search.ts";
+import { entryRoutes } from "./routes/entry.ts";
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -11,6 +12,7 @@ export function buildApp() {
   });
 
   app.register(searchRoutes);
+  app.register(entryRoutes);
 
   return app;
 }
