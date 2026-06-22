@@ -1,6 +1,126 @@
 # jmdict-hakase
 
-JMdict Japanese–English dictionary in PostgreSQL, with CJK full-text and pgvector semantic search, served over a Fastify API.
+A PostgreSQL build of the [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html) Japanese-English
+dictionary (around 217k entries), with fast CJK full-text search and a small Fastify REST API
+on top. (_hakase_, 博士, means "expert".)
+
+JMdict ships as one big JSON file. This project loads it into a proper normalised, indexed
+Postgres database and serves it over HTTP.
+
+## What it does
+
+- **Search that understands the script you type.** One `/search` endpoint handles both
+  languages. Type Japanese and it matches the written and spoken forms; type English and it
+  matches the meanings. It leans on [PGroonga](https://pgroonga.github.io/) for this, because
+  Postgres's built-in full-text search can't tokenise Japanese (there are no spaces between
+  words to split on).
+- **Sensible ranking.** Results come back ordered by how common the word is, then how well it
+  matched, then length, with one row per word.
+- **Full entry lookup.** `/entry/:id` gives you a whole entry back, with all its kanji,
+  readings, senses and glosses nested together, fetched in a single query.
+- **Rate limiting.** 60 requests a minute per IP, with the usual `x-ratelimit-*` and
+  `retry-after` headers.
+- **Caching.** An in-memory LRU cache with a TTL sits in front of entry lookups, so repeated
+  requests skip the database. Each response says whether it was a `HIT` or a `MISS`.
+
+## API
+
+| Method and path                     | What it does                                                                 |
+| ----------------------------------- | ---------------------------------------------------------------------------- |
+| `GET /search?q=<term>&limit=<1-50>` | Ranked search. Japanese `q` matches headwords, English `q` matches meanings. |
+| `GET /entry/:id`                    | The full nested entry for a JMdict id.                                       |
+
+```sh
+curl 'localhost:3000/search?q=cat'    # 猫 (cat) comes back first
+curl 'localhost:3000/search?q=猫'      # words written with 猫
+curl 'localhost:3000/entry/1467640'   # 猫 (cat), every reading and sense
+```
+
+```jsonc
+// GET /search?q=cat&limit=1
+[
+  {
+    "id": 1467640,
+    "kanji": "猫",
+    "reading": "ねこ",
+    "gloss": "cat (esp. the domestic cat, Felis catus)",
+    "common": true,
+  },
+]
+```
+
+## Tech stack
+
+- **TypeScript on Node 22.18+.** Run straight through Node's built-in type stripping, so
+  there's no build step.
+- **PostgreSQL with PGroonga** for full-text search, run locally through the Supabase CLI
+  (which brings it up in Docker).
+- **[postgres.js](https://github.com/porsager/postgres)** as the driver. Every query is a
+  parameterised tagged template, so there's no room for SQL injection, and the bulk load goes
+  through `COPY`.
+- **Fastify 5** for the API (decorators, plugins, and JSON Schema for validation and
+  serialisation).
+- **Supabase CLI migrations**, just plain SQL, no ORM.
+- **pnpm**, locked down against supply-chain attacks (a cooldown on brand-new releases, and
+  dependency build scripts off by default).
+
+## Data model
+
+Six tables: `entry`, with `kanji`, `kana` and `sense` hanging off it, `gloss` hanging off
+`sense`, and a `tag` lookup. It's a hybrid. The main hierarchy is properly normalised with
+foreign keys and `ON DELETE CASCADE`, but the flat tag lists (part of speech, field, misc and
+so on) are stored as `TEXT[]` arrays with GIN indexes rather than their own tables. All the
+indexes get built after the data is loaded, not before.
+
+That's about 217,538 entries, or roughly 1.4M rows in total.
+
+## Local development
+
+You'll need Docker (for the local Postgres), pnpm, and Node 22.18 or newer.
+
+```sh
+pnpm install
+pnpm db:start         # start local Supabase (Postgres) in Docker
+pnpm migration:up     # apply schema + enable PGroonga
+pnpm data:download    # fetch + checksum-verify the pinned JMdict release
+pnpm data:load        # stage, COPY, and index (one transaction)
+pnpm dev              # start the API on :3000 (watch mode)
+```
+
+### Scripts
+
+| Script                               | Action                                   |
+| ------------------------------------ | ---------------------------------------- |
+| `db:start` / `db:stop` / `db:status` | manage the local Supabase Postgres       |
+| `db:reset`                           | drop and recreate the local database     |
+| `migration:new` / `migration:up`     | create / apply SQL migrations            |
+| `data:download`                      | fetch + verify the pinned JMdict release |
+| `data:load`                          | stage, `COPY`, and index the data        |
+| `dev` / `serve`                      | run the API (watch mode / plain)         |
+| `typecheck`                          | `tsc --noEmit`                           |
+
+## Deployment
+
+See [`DEPLOY.md`](./DEPLOY.md). The setup is Postgres on Supabase (managed, and it includes
+PGroonga) with the API on Render.
+
+## A few decisions worth explaining
+
+- **Load with `COPY`, then build the indexes.** The loader writes the rows out to per-table
+  TSV files and streams them in with `COPY` in a single transaction, and only creates the
+  indexes afterwards. That's far quicker than row-by-row `INSERT`s against a live index.
+- **No N+1.** `/entry/:id` builds its whole nested shape with one `jsonb_agg` query instead of
+  looping and querying once per sense. One round trip instead of about thirty.
+- **Safe from injection by design.** Every user-supplied value goes in as a bound parameter,
+  and `sql.unsafe` never touches user input.
+- **Tags as arrays, no foreign key.** The tag lists are checked in the loader rather than
+  enforced with a foreign key. With a single trusted writer that's a cheap trade, and it keeps
+  things flat and fast.
+
+## Roadmap
+
+- **Semantic search** with pgvector: embed the gloss text so you can search by meaning ("find
+  words that mean roughly X"), behind `/search?mode=semantic`.
 
 ## Data source
 
