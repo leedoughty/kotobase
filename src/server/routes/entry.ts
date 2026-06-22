@@ -1,5 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { getEntry } from "../queries.ts";
+import { Cache } from "../cache.ts";
+
+const entryCache = new Cache<object>(1000, 60 * 60 * 1000); // 1000 entries, 1h TTL
 
 const tags = { type: "array", items: { type: "string" } } as const;
 
@@ -63,12 +66,21 @@ export async function entryRoutes(app: FastifyInstance) {
     { schema },
     async (request, reply) => {
       const { id } = request.params;
-      const [entry] = await getEntry(app.db, id);
+      const key = String(id);
 
+      const cached = entryCache.get(key);
+      if (cached) {
+        reply.header("x-cache", "HIT");
+        return cached;
+      }
+
+      const [entry] = await getEntry(app.db, id);
       if (!entry) {
         return reply.code(404).send({ error: "entry not found" });
       }
 
+      entryCache.set(key, entry);
+      reply.header("x-cache", "MISS");
       return entry;
     },
   );
