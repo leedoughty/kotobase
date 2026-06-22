@@ -29,6 +29,7 @@
     "typescript": "6.0.3"
   },
   "dependencies": {
+    "@fastify/rate-limit": "11.0.0",
     "fastify": "5.8.5",
     "postgres": "3.4.9",
     "stream-chain": "4.2.5",
