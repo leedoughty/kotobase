@@ -7,6 +7,10 @@ on top. (_hakase_, 博士, means "expert".)
 JMdict ships as one big JSON file. This project loads it into a proper normalised, indexed
 Postgres database and serves it over HTTP.
 
+**Live API:** <https://jmdict-hakase.onrender.com> - try
+[`/search?q=はかせ`](https://jmdict-hakase.onrender.com/search?q=はかせ) or
+[`/entry/1474620`](https://jmdict-hakase.onrender.com/entry/1474620)
+
 ## What it does
 
 - **Search that understands the script you type.** One `/search` endpoint handles both
@@ -31,22 +35,44 @@ Postgres database and serves it over HTTP.
 | `GET /entry/:id`                    | The full nested entry for a JMdict id.                                       |
 
 ```sh
-curl 'localhost:3000/search?q=cat'    # 猫 (cat) comes back first
-curl 'localhost:3000/search?q=猫'      # words written with 猫
-curl 'localhost:3000/entry/1467640'   # 猫 (cat), every reading and sense
+curl 'localhost:3000/search?q=はかせ' # 博士 (hakase, "expert") comes back first
+curl 'localhost:3000/search?q=博士' # words written with 博士
+curl 'localhost:3000/entry/1474620' # 博士: expert, doctor/PhD, and older senses
 ```
 
 ```jsonc
-// GET /search?q=cat&limit=1
+// GET /search?q=はかせ&limit=1
 [
   {
-    "id": 1467640,
-    "kanji": "猫",
-    "reading": "ねこ",
-    "gloss": "cat (esp. the domestic cat, Felis catus)",
+    "id": 1474620,
+    "kanji": "博士",
+    "reading": "はかせ",
+    "gloss": "expert",
     "common": true,
   },
 ]
+```
+
+```jsonc
+// GET /entry/1474620  (abridged — empty arrays and later senses trimmed)
+{
+  "id": 1474620,
+  "kanji": [{ "text": "博士", "common": true, "tags": [] }],
+  "kana": [{ "text": "はかせ", "common": true, "appliesToKanji": ["*"] }],
+  "senses": [
+    {
+      "partOfSpeech": ["n"],
+      "glosses": ["expert", "learned person"],
+    },
+    {
+      "partOfSpeech": ["n", "n-suf"],
+      "misc": ["col"],
+      "glosses": ["doctor", "PhD", "Dr."],
+    },
+    // … "instructor at the imperial court (ritsuryō period)",
+    //     "pitch and length marks (for a Buddhist liturgical chant)" …
+  ],
+}
 ```
 
 ## Tech stack
