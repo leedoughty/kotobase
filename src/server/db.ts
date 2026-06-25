@@ -1,12 +1,9 @@
-import postgres from "postgres";
+import { connect } from "../db.ts";
 
-export type Db = ReturnType<typeof createDb>;
+export type Db = ReturnType<typeof connect>;
 
-export function createDb() {
-  return postgres(
-    process.env.DATABASE_URL ??
-      "postgres://postgres:postgres@127.0.0.1:54322/postgres",
-  );
+export function createDb(): Db {
+  return connect();
 }
 
 declare module "fastify" {

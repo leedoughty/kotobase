@@ -10,13 +10,11 @@ import { parser } from "stream-json";
 import { pick } from "stream-json/filters/pick.js";
 import { streamArray } from "stream-json/streamers/stream-array.js";
 import { streamValues } from "stream-json/streamers/stream-values.js";
+import { connect } from "./db.ts";
 import type { JMdictWord } from "./jmdict.ts";
 
 const DATA_DIR = fileURLToPath(new URL("../data/", import.meta.url));
 const STAGE_DIR = `${DATA_DIR}copy/`;
-const DB_URL =
-  process.env.DATABASE_URL ??
-  "postgres://postgres:postgres@127.0.0.1:54322/postgres";
 
 const COLUMNS = {
   entry: ["id"],
@@ -218,7 +216,7 @@ async function buildIndexes(sql: postgres.TransactionSql): Promise<void> {
 }
 
 async function load(tags: Record<string, string>): Promise<void> {
-  const sql = postgres(DB_URL);
+  const sql = connect();
   try {
     await sql.begin(async (sql) => {
       await sql`TRUNCATE entry, kanji, kana, sense, gloss, tag RESTART IDENTITY CASCADE`;
