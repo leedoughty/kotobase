@@ -17,11 +17,11 @@ export function searchByMeaning(sql: Db, q: string, limit: number) {
         g.text AS gloss,
         (EXISTS (SELECT 1 FROM kanji WHERE entry_id = s.entry_id AND common)
          OR EXISTS (SELECT 1 FROM kana WHERE entry_id = s.entry_id AND common)) AS common,
-        pgroonga_score(g.tableoid, g.ctid) AS score
+        ts_rank_cd(to_tsvector('english', g.text), websearch_to_tsquery('english', ${q})) AS score
       FROM gloss g
       JOIN sense s ON s.id = g.sense_id
-      WHERE g.text &@ ${q}
-      ORDER BY s.entry_id, pgroonga_score(g.tableoid, g.ctid) DESC, length(g.text)
+      WHERE to_tsvector('english', g.text) @@ websearch_to_tsquery('english', ${q})
+      ORDER BY s.entry_id, ts_rank_cd(to_tsvector('english', g.text), websearch_to_tsquery('english', ${q})) DESC, length(g.text)
     ) m
     ORDER BY common DESC, score DESC, length(gloss)
     LIMIT ${limit}
@@ -75,7 +75,7 @@ export function examplesForWord(sql: Db, q: string, limit: number) {
         FROM (
           SELECT s.entry_id
           FROM gloss g JOIN sense s ON s.id = g.sense_id
-          WHERE g.text &@ ${q}
+          WHERE to_tsvector('english', g.text) @@ websearch_to_tsquery('english', ${q})
         ) h
         GROUP BY h.entry_id`;
 

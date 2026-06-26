@@ -221,7 +221,7 @@ async function buildIndexes(sql: postgres.TransactionSql): Promise<void> {
   await sql`CREATE INDEX example_sense_id_idx ON example (sense_id)`;
   await sql`CREATE INDEX kanji_text_pgroonga_idx ON kanji USING pgroonga (text)`;
   await sql`CREATE INDEX kana_text_pgroonga_idx ON kana USING pgroonga (text)`;
-  await sql`CREATE INDEX gloss_text_pgroonga_idx ON gloss USING pgroonga (text)`;
+  await sql`CREATE INDEX gloss_text_fts_idx ON gloss USING GIN (to_tsvector('english', text))`;
 }
 
 async function load(tags: Record<string, string>): Promise<void> {
