@@ -7,9 +7,11 @@ on top. (_hakase_, 博士, means "expert".)
 JMdict ships as one big JSON file. This project loads it into a proper normalised, indexed
 Postgres database and serves it over HTTP.
 
-**Live API:** <https://jmdict-hakase.onrender.com> - try
-[`/search?q=はかせ`](https://jmdict-hakase.onrender.com/search?q=はかせ) or
-[`/entry/1474620`](https://jmdict-hakase.onrender.com/entry/1474620)
+**Live API:** <https://jmdict-hakase.onrender.com> - try:
+
+- [`/search?q=はかせ`](https://jmdict-hakase.onrender.com/search?q=はかせ) - search by reading
+- [`/entry/1474620`](https://jmdict-hakase.onrender.com/entry/1474620) - the full 博士 entry
+- [`/examples?q=博士`](https://jmdict-hakase.onrender.com/examples?q=博士) - example sentences for 博士
 
 ## What it does
 
