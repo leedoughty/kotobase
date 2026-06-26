@@ -17,9 +17,9 @@ Postgres database and serves it over HTTP.
 
 - **Search that understands the script you type.** One `/search` endpoint handles both
   languages. Type Japanese and it matches the written and spoken forms; type English and it
-  matches the meanings. It leans on [PGroonga](https://pgroonga.github.io/) for this, because
+  matches the meanings. Japanese leans on [PGroonga](https://pgroonga.github.io/), because
   Postgres's built-in full-text search can't tokenise Japanese (there are no spaces between
-  words to split on).
+  words to split on); English uses Postgres's own `tsvector` full-text search.
 - **Sensible ranking.** Results come back ordered by how common the word is, then how well it
   matched, then length, with one row per word.
 - **Full entry lookup.** `/entry/:id` gives you a whole entry back, with all its kanji,
@@ -97,8 +97,9 @@ curl 'localhost:3000/examples?q=本' # sentences for 本, "book" senses surfacin
 
 - **TypeScript on Node 22.18+.** Run straight through Node's built-in type stripping, so
   there's no build step.
-- **PostgreSQL with PGroonga** for full-text search, run locally through the Supabase CLI
-  (which brings it up in Docker).
+- **PostgreSQL** for storage and full-text search — PGroonga for CJK (Japanese headwords) and
+  native `tsvector` FTS for English glosses — run locally through the Supabase CLI (which brings
+  it up in Docker).
 - **[postgres.js](https://github.com/porsager/postgres)** as the driver. Every query is a
   parameterised tagged template, so there's no room for SQL injection, and the bulk load goes
   through `COPY`.
@@ -169,6 +170,13 @@ PGroonga) with the API on Render.
 - **Examples are storage-aware.** They reuse the existing kanji/kana/gloss indexes to resolve
   the word, then join on `sense_id`; there's deliberately _no_ full-text index on the sentence
   text itself, which keeps the feature to ~7 MB and inside Supabase's free tier.
+- **PGroonga for CJK, native FTS for English.** Japanese headwords (`kanji`/`kana`) are indexed
+  with PGroonga, because Postgres's built-in tokeniser can't split Japanese (no spaces between
+  words). English glosses, though, tokenise fine with native `to_tsvector('english', …)` + GIN
+  — which is _much_ smaller on disk than a PGroonga index (the gloss index alone went from
+  ~70 MB to ~8 MB) and gives proper stemming, so searching "cat" matches 猫 without dragging in
+  "category" the way a substring match did. Using the right tool per language keeps the whole
+  DB inside the free tier.
 
 ## Roadmap
 
