@@ -7,10 +7,10 @@ import { pipeline } from "node:stream/promises";
 import type { ReadableStream as WebReadableStream } from "node:stream/web";
 import { x as extractTar } from "tar";
 
-const VERSION = "3.6.2+20260615170427";
-const ASSET = `jmdict-eng-${VERSION}.json.tgz`;
+const VERSION = "3.6.2+20260622163854";
+const ASSET = `jmdict-examples-eng-${VERSION}.json.tgz`;
 const SHA256 =
-  "a330a05652dfa46bdc4faf1a102e66fd6ee2c54c53d1581994e1ead15243cb62";
+  "d1277395eeb4008d9d924675bd77a8912391b69043f6077420d0559f8460d68c";
 const DOWNLOAD_URL = `https://github.com/scriptin/jmdict-simplified/releases/download/${encodeURIComponent(VERSION)}/${ASSET}`;
 
 const DATA_DIR = fileURLToPath(new URL("../data/", import.meta.url));

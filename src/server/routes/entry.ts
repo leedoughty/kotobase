@@ -52,6 +52,16 @@ const schema = {
               dialect: tags,
               info: tags,
               glosses: tags,
+              examples: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    japanese: { type: "string" },
+                    english: { type: ["string", "null"] },
+                  },
+                },
+              },
             },
           },
         },

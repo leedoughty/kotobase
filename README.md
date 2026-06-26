@@ -22,6 +22,8 @@ Postgres database and serves it over HTTP.
   matched, then length, with one row per word.
 - **Full entry lookup.** `/entry/:id` gives you a whole entry back, with all its kanji,
   readings, senses and glosses nested together, fetched in a single query.
+- **Example sentences.** `/examples` finds real Japanese↔English sentence pairs for a word
+  (from the Tanaka/Tatoeba corpus), and every entry's senses carry their own examples inline.
 - **Rate limiting.** 60 requests a minute per IP, with the usual `x-ratelimit-*` and
   `retry-after` headers.
 - **Caching.** An in-memory LRU cache with a TTL sits in front of entry lookups, so repeated
@@ -29,15 +31,17 @@ Postgres database and serves it over HTTP.
 
 ## API
 
-| Method and path                     | What it does                                                                 |
-| ----------------------------------- | ---------------------------------------------------------------------------- |
-| `GET /search?q=<term>&limit=<1-50>` | Ranked search. Japanese `q` matches headwords, English `q` matches meanings. |
-| `GET /entry/:id`                    | The full nested entry for a JMdict id.                                       |
+| Method and path                       | What it does                                                                    |
+| ------------------------------------- | ------------------------------------------------------------------------------- |
+| `GET /search?q=<term>&limit=<1-50>`   | Ranked search. Japanese `q` matches headwords, English `q` matches meanings.    |
+| `GET /entry/:id`                      | The full nested entry for a JMdict id.                                          |
+| `GET /examples?q=<term>&limit=<1-50>` | Example sentences for a word (Japanese or English `q`), ranked and diversified. |
 
 ```sh
 curl 'localhost:3000/search?q=はかせ' # 博士 (hakase, "expert") comes back first
 curl 'localhost:3000/search?q=博士' # words written with 博士
 curl 'localhost:3000/entry/1474620' # 博士: expert, doctor/PhD, and older senses
+curl 'localhost:3000/examples?q=本' # sentences for 本, "book" senses surfacing first
 ```
 
 ```jsonc
@@ -50,6 +54,18 @@ curl 'localhost:3000/entry/1474620' # 博士: expert, doctor/PhD, and older sens
     "gloss": "expert",
     "common": true,
   },
+]
+```
+
+```jsonc
+// GET /examples?q=本&limit=3
+[
+  {
+    "japanese": "昨日はその本を８０ページまで読んだ。",
+    "english": "I read the book up to page 80 yesterday.",
+    "entryId": 1522150,
+  },
+  // … more, spread across the words written with 本 …
 ]
 ```
 
@@ -92,13 +108,13 @@ curl 'localhost:3000/entry/1474620' # 博士: expert, doctor/PhD, and older sens
 
 ## Data model
 
-Six tables: `entry`, with `kanji`, `kana` and `sense` hanging off it, `gloss` hanging off
-`sense`, and a `tag` lookup. It's a hybrid. The main hierarchy is properly normalised with
-foreign keys and `ON DELETE CASCADE`, but the flat tag lists (part of speech, field, misc and
-so on) are stored as `TEXT[]` arrays with GIN indexes rather than their own tables. All the
-indexes get built after the data is loaded, not before.
+Seven tables: `entry`, with `kanji`, `kana` and `sense` hanging off it, `gloss` and `example`
+hanging off `sense`, and a `tag` lookup. It's a hybrid. The main hierarchy is properly
+normalised with foreign keys and `ON DELETE CASCADE`, but the flat tag lists (part of speech,
+field, misc and so on) are stored as `TEXT[]` arrays with GIN indexes rather than their own
+tables. All the indexes get built after the data is loaded, not before.
 
-That's about 217,538 entries, or roughly 1.4M rows in total.
+That's about 217,538 entries and ~32K example sentences, or roughly 1.4M rows in total.
 
 ## Local development
 
@@ -142,6 +158,15 @@ PGroonga) with the API on Render.
 - **Tags as arrays, no foreign key.** The tag lists are checked in the loader rather than
   enforced with a foreign key. With a single trusted writer that's a cheap trade, and it keeps
   things flat and fast.
+- **Example ranking: exact → common → diversify.** A single kanji often spans several words
+  (本 is both ほん "book" and もと "origin/basis"), and PGroonga's CJK match is a substring
+  match, so a naive query for 本 buries the obvious senses under compounds (一本, 基本) and
+  lets one high-frequency word fill the page. `/examples` ranks whole-word matches first, then
+  common everyday words, then caps each entry to two sentences so the results stay a browsable
+  spread rather than a monoculture — without dropping the fuzzy matches further down.
+- **Examples are storage-aware.** They reuse the existing kanji/kana/gloss indexes to resolve
+  the word, then join on `sense_id`; there's deliberately _no_ full-text index on the sentence
+  text itself, which keeps the feature to ~7 MB and inside Supabase's free tier.
 
 ## Roadmap
 

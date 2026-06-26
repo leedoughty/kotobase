@@ -18,6 +18,22 @@ export interface JMdictGloss {
   text: string;
 }
 
+export interface JMdictExampleSentence {
+  lang: string;
+  text: string;
+}
+
+export interface JMdictExampleSource {
+  type: string;
+  value: string;
+}
+
+export interface JMdictExample {
+  source: JMdictExampleSource;
+  text: string;
+  sentences: JMdictExampleSentence[];
+}
+
 export interface JMdictSense {
   partOfSpeech: string[];
   appliesToKanji: string[];
@@ -27,6 +43,7 @@ export interface JMdictSense {
   misc: string[];
   info: string[];
   gloss: JMdictGloss[];
+  examples?: JMdictExample[];
 }
 
 export interface JMdictWord {

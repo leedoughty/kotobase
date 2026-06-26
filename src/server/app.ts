@@ -3,6 +3,7 @@ import rateLimit from "@fastify/rate-limit";
 import { createDb } from "./db.ts";
 import { searchRoutes } from "./routes/search.ts";
 import { entryRoutes } from "./routes/entry.ts";
+import { exampleRoutes } from "./routes/examples.ts";
 
 export function buildApp() {
   const app = Fastify({ logger: true });
@@ -15,6 +16,7 @@ export function buildApp() {
   app.register(rateLimit, { max: 60, timeWindow: "1 minute" });
   app.register(searchRoutes);
   app.register(entryRoutes);
+  app.register(exampleRoutes);
 
   return app;
 }

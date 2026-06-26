@@ -41,6 +41,7 @@ const COLUMNS = {
     "applies_to_kana",
   ],
   gloss: ["id", "sense_id", "position", "lang", "text", "type", "gender"],
+  example: ["id", "sense_id", "position", "source", "japanese", "english"],
 } as const;
 
 type Cell = string | number | boolean | string[] | null | undefined;
@@ -105,10 +106,10 @@ function checkTags(
 
 async function findJson(): Promise<string> {
   const files = await readdir(DATA_DIR);
-  const name = files.find((f) => /^jmdict-eng-.*\.json$/.test(f));
+  const name = files.find((f) => /^jmdict-examples-eng-.*\.json$/.test(f));
   if (!name) {
     throw new Error(
-      "no jmdict-eng JSON in data/ — run `pnpm data:download` first",
+      "no jmdict-examples-eng JSON in data/ — run `pnpm data:download` first",
     );
   }
   return `${DATA_DIR}${name}`;
@@ -135,6 +136,7 @@ async function stage(jsonPath: string, tags: Record<string, string>) {
   const kana = writer("kana");
   const sense = writer("sense");
   const gloss = writer("gloss");
+  const example = writer("example");
   let nEntry = 0;
 
   const source = chain([
@@ -181,6 +183,13 @@ async function stage(jsonPath: string, tags: Record<string, string>) {
       for (const gl of s.gloss) {
         await gloss.push(sid, ++g, gl.lang, gl.text, gl.type, gl.gender);
       }
+      let e = 0;
+      for (const ex of s.examples ?? []) {
+        const jpn = ex.sentences.find((x) => x.lang === "jpn")?.text;
+        const eng = ex.sentences.find((x) => x.lang === "eng")?.text ?? null;
+        if (!jpn) continue; // skip malformed examples with no Japanese sentence
+        await example.push(sid, ++e, ex.source.value, jpn, eng);
+      }
     }
   }
 
@@ -191,6 +200,7 @@ async function stage(jsonPath: string, tags: Record<string, string>) {
     kana.close(),
     sense.close(),
     gloss.close(),
+    example.close(),
   ]);
 
   return {
@@ -199,6 +209,7 @@ async function stage(jsonPath: string, tags: Record<string, string>) {
     kana: kana.count(),
     sense: sense.count(),
     gloss: gloss.count(),
+    example: example.count(),
   };
 }
 
@@ -207,9 +218,7 @@ async function buildIndexes(sql: postgres.TransactionSql): Promise<void> {
   await sql`CREATE INDEX kana_entry_id_idx ON kana (entry_id)`;
   await sql`CREATE INDEX sense_entry_id_idx ON sense (entry_id)`;
   await sql`CREATE INDEX gloss_sense_id_idx ON gloss (sense_id)`;
-  await sql`CREATE INDEX kanji_text_idx ON kanji (text)`;
-  await sql`CREATE INDEX kana_text_idx ON kana (text)`;
-  await sql`CREATE INDEX sense_part_of_speech_idx ON sense USING GIN (part_of_speech)`;
+  await sql`CREATE INDEX example_sense_id_idx ON example (sense_id)`;
   await sql`CREATE INDEX kanji_text_pgroonga_idx ON kanji USING pgroonga (text)`;
   await sql`CREATE INDEX kana_text_pgroonga_idx ON kana USING pgroonga (text)`;
   await sql`CREATE INDEX gloss_text_pgroonga_idx ON gloss USING pgroonga (text)`;
@@ -219,12 +228,12 @@ async function load(tags: Record<string, string>): Promise<void> {
   const sql = connect();
   try {
     await sql.begin(async (sql) => {
-      await sql`TRUNCATE entry, kanji, kana, sense, gloss, tag RESTART IDENTITY CASCADE`;
+      await sql`TRUNCATE entry, kanji, kana, sense, gloss, example, tag RESTART IDENTITY CASCADE`;
 
       const stale = await sql`
         SELECT indexname FROM pg_indexes
         WHERE schemaname = 'public'
-          AND tablename IN ('entry', 'kanji', 'kana', 'sense', 'gloss')
+          AND tablename IN ('entry', 'kanji', 'kana', 'sense', 'gloss', 'example')
           AND indexname !~ '_pkey$'`;
       for (const { indexname } of stale)
         await sql`DROP INDEX IF EXISTS ${sql(indexname)}`;
@@ -242,6 +251,7 @@ async function load(tags: Record<string, string>): Promise<void> {
         "kana",
         "sense",
         "gloss",
+        "example",
       ] as const) {
         await pipeline(
           createReadStream(`${STAGE_DIR}${name}.tsv`),
@@ -251,7 +261,7 @@ async function load(tags: Record<string, string>): Promise<void> {
 
       await buildIndexes(sql);
 
-      for (const t of ["kanji", "kana", "sense", "gloss"]) {
+      for (const t of ["kanji", "kana", "sense", "gloss", "example"]) {
         await sql`SELECT setval(pg_get_serial_sequence(${t}, 'id'), (SELECT COALESCE(MAX(id), 1) FROM ${sql(t)}))`;
       }
     });
@@ -270,7 +280,7 @@ async function main(): Promise<void> {
   console.log("Staging rows …");
   const counts = await stage(jsonPath, tags);
   console.log(
-    `  entries ${counts.entry} · kanji ${counts.kanji} · kana ${counts.kana} · sense ${counts.sense} · gloss ${counts.gloss}`,
+    `  entries ${counts.entry} · kanji ${counts.kanji} · kana ${counts.kana} · sense ${counts.sense} · gloss ${counts.gloss} · example ${counts.example}`,
   );
 
   console.log("COPY + index into Postgres (one transaction) …");
